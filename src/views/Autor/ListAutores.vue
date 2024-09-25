@@ -47,16 +47,13 @@ function irInicio() {
 </script>
 
 <template>
-  <v-btn @click="irInicio">Inicio</v-btn>
-
-  <br />
-
   <v-data-table :headers="headers" :items="autores" hide-default-footer>
     <template v-slot:top>
-      <v-toolbar flat>
+      <v-toolbar flat color="black">
         <v-toolbar-title>AUTORES</v-toolbar-title>
+        <v-btn icon="mdi-home" @click="irInicio"></v-btn>
         <v-divider class="mx-4" inset vertical></v-divider>
-        <v-btn class="mb-2" color="primary" dark @click="anadirAutor"> Añadir autor </v-btn>
+        <v-btn icon="mdi-plus" @click="anadirAutor"></v-btn>
       </v-toolbar>
     </template>
     <template v-slot:item.actions="{ item }">

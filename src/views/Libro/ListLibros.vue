@@ -47,19 +47,28 @@ function irInicio() {
 </script>
 
 <template>
-  <v-btn @click="irInicio">Inicio</v-btn>
-  <br />
-  <v-data-table :headers="headers" :items="libros" hide-default-footer>
+  <v-data-table :headers="headers" :items="libros" hide-default-footer color="grey">
     <template v-slot:top>
-      <v-toolbar flat>
+      <v-toolbar flat color="black">
         <v-toolbar-title>LIBROS</v-toolbar-title>
+        <v-btn icon="mdi-home" @click="irInicio"></v-btn>
         <v-divider class="mx-4" inset vertical></v-divider>
-        <v-btn class="mb-2" color="primary" dark @click="anadirLibro"> Añadir libro </v-btn>
+        <v-btn icon="mdi-plus" @click="anadirLibro"></v-btn>
       </v-toolbar>
     </template>
+
     <template v-slot:item.actions="{ item }">
       <v-icon class="me-2" size="small" @click="editarLibro(item)"> mdi-pencil </v-icon>
       <v-icon size="small" @click="borrarLibro(item)"> mdi-delete </v-icon>
     </template>
   </v-data-table>
 </template>
+<style>
+.v-table {
+  border-radius: inherit;
+  line-height: 1.5;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+</style>
