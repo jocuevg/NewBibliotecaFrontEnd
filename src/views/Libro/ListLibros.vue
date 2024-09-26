@@ -3,11 +3,13 @@ import { onBeforeMount, ref } from 'vue'
 import instance from '@/services/api'
 import type { Libro } from '@/models/Libro'
 import router from '@/router'
+import { useLibrosStore } from '@/stores/Libros'
 
 onBeforeMount(async () => {
-  libros.value.push(...(await instance.get<Libro[]>('Book/All')).data)
+  libros.value = LibrosStore.Llibros.value
 })
 
+const LibrosStore = await useLibrosStore()
 const libros = ref<Libro[]>([])
 const headers = [
   {

@@ -5,6 +5,7 @@ import type { Autor } from '@/models/Autor'
 import { onBeforeMount, ref } from 'vue'
 import instance from '@/services/api'
 import router from '@/router'
+import { useLibrosStore } from '@/stores/Libros'
 
 onBeforeMount(async () => {
   autores.value.push(...(await instance.get<Autor[]>('Author/All')).data)
@@ -24,11 +25,12 @@ const props = defineProps<{
   id?: number
 }>()
 
+const LibrosStore = await useLibrosStore()
 const titulo = ref<string>()
-const nombre = ref<string | undefined>()
-const numeroPaginas = ref<number | undefined>()
+const nombre = ref<string>()
+const numeroPaginas = ref<number>()
 const anonimo = ref(false)
-const autorId = ref<number | undefined>()
+const autorId = ref<number>()
 const autores = ref<Autor[]>([])
 const validationError = ref<string>()
 
@@ -39,7 +41,13 @@ async function anadirLibro() {
       numeroPaginas: numeroPaginas.value,
       autorId: anonimo.value ? undefined : autorId.value
     })
-    .then(() => {
+    .then((res) => {
+      LibrosStore.agregar({
+        id: res.data,
+        nombre: nombre.value!,
+        numeroPaginas: numeroPaginas.value!,
+        autorId: anonimo.value ? undefined : autorId.value
+      })
       router.push('/Libros')
     })
     .catch((error) => {
