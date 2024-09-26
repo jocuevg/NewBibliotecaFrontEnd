@@ -12,12 +12,13 @@ const autores = ref<Autor[]>([])
 const headers = [
   {
     title: 'ID',
-    key: 'id'
+    key: 'id',
+    align: 'center'
   },
-  { title: 'Nombre', key: 'nombre' },
-  { title: 'Apellidos', key: 'apellidos' },
-  { title: 'Edad', key: 'edad' },
-  { title: 'Acciones', key: 'actions', sortable: false }
+  { title: 'Nombre', key: 'nombre', align: 'center' },
+  { title: 'Apellidos', key: 'apellidos', align: 'center' },
+  { title: 'Edad', key: 'edad', align: 'center' },
+  { title: 'Acciones', key: 'actions', sortable: false, align: 'center' }
 ]
 
 async function borrarAutor(autor: Autor) {
@@ -47,7 +48,7 @@ function irInicio() {
 </script>
 
 <template>
-  <v-data-table :headers="headers" :items="autores" hide-default-footer>
+  <v-data-table :headers="headers" :items="autores" hide-default-footer style="height: 100%">
     <template v-slot:top>
       <v-toolbar flat color="black">
         <v-toolbar-title>AUTORES</v-toolbar-title>

@@ -24,7 +24,7 @@ const router = createRouter({
       component: Autores
     },
     {
-      path: '/Libros/Añadir',
+      path: '/Libros/Agregar',
       name: 'Anadirlibro',
       component: FLibro
     },
@@ -37,7 +37,7 @@ const router = createRouter({
       })
     },
     {
-      path: '/Autores/Añadir',
+      path: '/Autores/Agregar',
       name: 'Anadirautor',
       component: FAutor
     },

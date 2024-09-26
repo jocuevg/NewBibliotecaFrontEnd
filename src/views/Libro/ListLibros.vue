@@ -12,12 +12,13 @@ const libros = ref<Libro[]>([])
 const headers = [
   {
     title: 'ID',
-    key: 'id'
+    key: 'id',
+    align: 'center'
   },
-  { title: 'Nombre', key: 'nombre' },
-  { title: 'Número de páginas', key: 'numeroPaginas' },
-  { title: 'Id Autor', key: 'autorId' },
-  { title: 'Acciones', key: 'actions', sortable: false }
+  { title: 'Nombre', key: 'nombre', align: 'center' },
+  { title: 'Número de páginas', key: 'numeroPaginas', align: 'center' },
+  { title: 'Id Autor', key: 'autorId', align: 'center' },
+  { title: 'Acciones', key: 'actions', sortable: false, align: 'center' }
 ]
 
 async function borrarLibro(libro: Libro) {
@@ -47,7 +48,7 @@ function irInicio() {
 </script>
 
 <template>
-  <v-data-table :headers="headers" :items="libros" hide-default-footer color="grey">
+  <v-data-table :headers="headers" :items="libros" hide-default-footer style="height: 100%">
     <template v-slot:top>
       <v-toolbar flat color="black">
         <v-toolbar-title>LIBROS</v-toolbar-title>
@@ -63,12 +64,11 @@ function irInicio() {
     </template>
   </v-data-table>
 </template>
+
 <style>
-.v-table {
-  border-radius: inherit;
-  line-height: 1.5;
-  max-width: 100%;
+.v-data-table-header__content {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  font-weight: 800;
 }
 </style>

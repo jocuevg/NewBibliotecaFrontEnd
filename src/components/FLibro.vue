@@ -9,9 +9,11 @@ import router from '@/router'
 onBeforeMount(async () => {
   autores.value.push(...(await instance.get<Autor[]>('Author/All')).data)
   if (!props.id) {
+    titulo.value = 'Añadir libro'
     return
   }
   let libro = (await instance.get<Libro>(`Book/${props.id}`)).data
+  titulo.value = 'Editar libro'
   nombre.value = libro.nombre
   anonimo.value = libro.autorId === null
   autorId.value = libro.autorId
@@ -22,6 +24,7 @@ const props = defineProps<{
   id?: number
 }>()
 
+const titulo = ref<string>()
 const nombre = ref<string | undefined>()
 const numeroPaginas = ref<number | undefined>()
 const anonimo = ref(false)
@@ -68,35 +71,40 @@ function cancelar() {
 </script>
 
 <template>
-  <v-text-field label="Nombre" variant="outlined" required v-model="nombre"></v-text-field>
+  <v-card :title="titulo" style="opacity: 95%; width: 40%; align-self: center; margin-top: 10%">
+    <v-card-text>
+      <v-text-field label="Nombre" variant="outlined" required v-model="nombre"></v-text-field>
 
-  <v-text-field
-    label="Número de paginas"
-    variant="outlined"
-    type="number"
-    required
-    v-model="numeroPaginas"
-  ></v-text-field>
+      <v-text-field
+        label="Número de paginas"
+        variant="outlined"
+        type="number"
+        required
+        v-model="numeroPaginas"
+      ></v-text-field>
 
-  <v-checkbox v-model="anonimo" label="Anónimo"></v-checkbox>
+      <v-checkbox v-model="anonimo" label="Anónimo"></v-checkbox>
 
-  <template v-if="!anonimo">
-    <v-select
-      label="Autor"
-      :items="autores"
-      variant="outlined"
-      v-model="autorId"
-      :required="!anonimo"
-      :item-title="(item: Autor) => `${item.nombre} ${item.apellidos}`"
-      item-value="id"
-      single-line
-    ></v-select>
-  </template>
+      <template v-if="!anonimo">
+        <v-select
+          label="Autor"
+          :items="autores"
+          variant="outlined"
+          v-model="autorId"
+          :required="!anonimo"
+          :item-title="(item: Autor) => `${item.nombre} ${item.apellidos}`"
+          item-value="id"
+          single-line
+        ></v-select>
+      </template>
+    </v-card-text>
+    <v-card-actions>
+      <v-btn v-if="!props.id" @click="anadirLibro">Añadir libro</v-btn>
+      <v-btn v-else @click="modificarLibro()">Guardar</v-btn>
 
-  <v-btn v-if="!props.id" @click="anadirLibro">Añadir libro</v-btn>
-  <v-btn v-else @click="modificarLibro()">Guardar</v-btn>
-
-  <v-btn @click="cancelar">Cancelar</v-btn>
+      <v-btn @click="cancelar">Cancelar</v-btn>
+    </v-card-actions>
+  </v-card>
 
   <template v-if="validationError != undefined">{{ validationError }}</template>
 </template>
