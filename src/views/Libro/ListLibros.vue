@@ -4,13 +4,15 @@ import instance from '@/services/api'
 import type { Libro } from '@/models/Libro'
 import router from '@/router'
 import { useLibrosStore } from '@/stores/Libros'
+import { storeToRefs } from 'pinia'
 
 onBeforeMount(async () => {
-  libros.value = LibrosStore.Llibros.value
+  await LibrosStore.loadBooks(true)
 })
 
-const LibrosStore = await useLibrosStore()
-const libros = ref<Libro[]>([])
+const LibrosStore = useLibrosStore()
+const { Llibros } = storeToRefs(LibrosStore)
+
 const headers = [
   {
     title: 'ID',
@@ -25,10 +27,7 @@ const headers = [
 
 async function borrarLibro(libro: Libro) {
   await instance.delete<number>('Book/' + libro.id)
-  libros.value.splice(
-    libros.value.findIndex((item) => item.id == libro.id),
-    1
-  )
+  LibrosStore.quitar(libro)
 }
 
 function editarLibro(libro: Libro) {
@@ -50,7 +49,7 @@ function irInicio() {
 </script>
 
 <template>
-  <v-data-table :headers="headers" :items="libros" hide-default-footer style="height: 100%">
+  <v-data-table :headers="headers" :items="Llibros" hide-default-footer style="height: 100%">
     <template v-slot:top>
       <v-toolbar flat color="black">
         <v-toolbar-title>LIBROS</v-toolbar-title>

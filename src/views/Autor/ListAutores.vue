@@ -3,12 +3,16 @@ import { onBeforeMount, ref } from 'vue'
 import instance from '@/services/api'
 import type { Autor } from '@/models/Autor'
 import router from '@/router'
+import { useAutoresStore } from '@/stores/Autores'
+import { storeToRefs } from 'pinia'
 
 onBeforeMount(async () => {
-  autores.value.push(...(await instance.get<Autor[]>('Author/All')).data)
+  AutoresStore.loadAuthors(true)
 })
 
-const autores = ref<Autor[]>([])
+const AutoresStore = useAutoresStore()
+const { Lautores } = storeToRefs(AutoresStore)
+
 const headers = [
   {
     title: 'ID',
@@ -23,10 +27,7 @@ const headers = [
 
 async function borrarAutor(autor: Autor) {
   await instance.delete<number>('Author/' + autor.id)
-  autores.value.splice(
-    autores.value.findIndex((item) => item.id == autor.id),
-    1
-  )
+  AutoresStore.quitar(autor)
 }
 
 function editarAutor(autor: Autor) {
@@ -48,7 +49,7 @@ function irInicio() {
 </script>
 
 <template>
-  <v-data-table :headers="headers" :items="autores" hide-default-footer style="height: 100%">
+  <v-data-table :headers="headers" :items="Lautores" hide-default-footer style="height: 100%">
     <template v-slot:top>
       <v-toolbar flat color="black">
         <v-toolbar-title>AUTORES</v-toolbar-title>

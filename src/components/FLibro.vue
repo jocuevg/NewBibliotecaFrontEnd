@@ -6,14 +6,16 @@ import { onBeforeMount, ref } from 'vue'
 import instance from '@/services/api'
 import router from '@/router'
 import { useLibrosStore } from '@/stores/Libros'
+import { storeToRefs } from 'pinia'
+import { useAutoresStore } from '@/stores/Autores'
 
 onBeforeMount(async () => {
-  autores.value.push(...(await instance.get<Autor[]>('Author/All')).data)
+  AutoresStore.loadAuthors()
   if (!props.id) {
     titulo.value = 'Añadir libro'
     return
   }
-  let libro = (await instance.get<Libro>(`Book/${props.id}`)).data
+  let libro: Libro = LibrosStore.getLibro(props.id)
   titulo.value = 'Editar libro'
   nombre.value = libro.nombre
   anonimo.value = libro.autorId === null
@@ -25,13 +27,14 @@ const props = defineProps<{
   id?: number
 }>()
 
-const LibrosStore = await useLibrosStore()
+const LibrosStore = useLibrosStore()
+const AutoresStore = useAutoresStore()
+const { Lautores } = storeToRefs(AutoresStore)
 const titulo = ref<string>()
 const nombre = ref<string>()
 const numeroPaginas = ref<number>()
 const anonimo = ref(false)
 const autorId = ref<number>()
-const autores = ref<Autor[]>([])
 const validationError = ref<string>()
 
 async function anadirLibro() {
@@ -41,13 +44,7 @@ async function anadirLibro() {
       numeroPaginas: numeroPaginas.value,
       autorId: anonimo.value ? undefined : autorId.value
     })
-    .then((res) => {
-      LibrosStore.agregar({
-        id: res.data,
-        nombre: nombre.value!,
-        numeroPaginas: numeroPaginas.value!,
-        autorId: anonimo.value ? undefined : autorId.value
-      })
+    .then(() => {
       router.push('/Libros')
     })
     .catch((error) => {
@@ -96,7 +93,7 @@ function cancelar() {
       <template v-if="!anonimo">
         <v-select
           label="Autor"
-          :items="autores"
+          :items="Lautores"
           variant="outlined"
           v-model="autorId"
           :required="!anonimo"
@@ -111,8 +108,10 @@ function cancelar() {
       <v-btn v-else @click="modificarLibro()">Guardar</v-btn>
 
       <v-btn @click="cancelar">Cancelar</v-btn>
+
+      <p style="white-space: pre-line; color: red" v-if="validationError != undefined">
+        {{ validationError }}
+      </p>
     </v-card-actions>
   </v-card>
-
-  <template v-if="validationError != undefined">{{ validationError }}</template>
 </template>

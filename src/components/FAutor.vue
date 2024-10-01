@@ -4,13 +4,14 @@ import type { Autor } from '@/models/Autor'
 import { onBeforeMount, ref } from 'vue'
 import instance from '@/services/api'
 import router from '@/router'
+import { useAutoresStore } from '@/stores/Autores'
 
 onBeforeMount(async () => {
   if (!props.id) {
     titulo.value = 'Añadir autor'
     return
   }
-  let autor = (await instance.get<Autor>(`Author/${props.id}`)).data
+  let autor: Autor = AutoresStore.getAutor(props.id)
   titulo.value = 'Editar autor'
   nombre.value = autor.nombre
   apellidos.value = autor.apellidos
@@ -21,6 +22,7 @@ const props = defineProps<{
   id?: number
 }>()
 
+const AutoresStore = useAutoresStore()
 const titulo = ref<string>()
 const nombre = ref<string | undefined>()
 const apellidos = ref<string | undefined>()
@@ -88,9 +90,12 @@ function cancelar() {
         ><v-btn v-if="!props.id" @click="anadirAutor">Añadir autor</v-btn>
         <v-btn v-else @click="modificarAutor()">Guardar</v-btn>
 
-        <v-btn @click="cancelar">Cancelar</v-btn></v-card-actions
-      >
+        <v-btn @click="cancelar">Cancelar</v-btn>
+
+        <p style="white-space: pre-line; color: red" v-if="validationError != undefined">
+          {{ validationError }}
+        </p>
+      </v-card-actions>
     </v-card>
-    <template v-if="validationError != undefined">{{ validationError }}</template>
   </div>
 </template>
