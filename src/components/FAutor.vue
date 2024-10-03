@@ -1,101 +1,110 @@
 <script setup lang="ts">
 import type { Autor } from '@/models/Autor'
+import { useAutor } from '@/componsables/Autor'
+import { computed, ref } from 'vue'
 
-import { onBeforeMount, ref } from 'vue'
-import instance from '@/services/api'
-import router from '@/router'
-import { useAutoresStore } from '@/stores/Autores'
-
-onBeforeMount(async () => {
-  if (!props.id) {
-    titulo.value = 'Añadir autor'
-    return
-  }
-  let autor: Autor = AutoresStore.getAutor(props.id)
-  titulo.value = 'Editar autor'
-  nombre.value = autor.nombre
-  apellidos.value = autor.apellidos
-  edad.value = autor.edad
-})
-
-const props = defineProps<{
-  id?: number
-}>()
-
-const AutoresStore = useAutoresStore()
+const { agregar, modificar } = useAutor()
 const titulo = ref<string>()
 const nombre = ref<string | undefined>()
 const apellidos = ref<string | undefined>()
 const edad = ref<number | undefined>()
-const validationError = ref<string>()
+const id = ref<number>()
+const validationError = ref<string | undefined>()
+const dialog = ref(false)
+const completo = computed(() => !!nombre.value && !!apellidos.value && !!edad.value)
+
+function showDialog(autor?: Autor) {
+  titulo.value = autor ? 'Editar autor' : 'Añadir autor'
+  nombre.value = autor?.nombre
+  apellidos.value = autor?.apellidos
+  edad.value = autor?.edad
+  id.value = autor?.id
+  dialog.value = true
+}
 
 async function anadirAutor() {
-  await instance
-    .post<number>('Author', {
-      nombre: nombre.value,
-      apellidos: apellidos.value,
-      edad: edad.value
-    })
-    .then(() => {
-      router.push('/Autores')
-    })
-    .catch((error) => {
-      validationError.value = error.response.data.description
-      return
-    })
+  var res = await agregar({
+    nombre: nombre.value!,
+    apellidos: apellidos.value!,
+    edad: edad.value!
+  })
+  if (res) {
+    validationError.value = res
+    return
+  }
+  dialog.value = false
 }
 
 async function modificarAutor() {
-  await instance
-    .put('Author/' + props.id, {
-      nombre: nombre.value,
-      apellidos: apellidos.value,
-      edad: edad.value
-    })
-    .then(() => {
-      router.push('/Autores')
-    })
-    .catch((error) => {
-      validationError.value = error.response.data.description
-      return
-    })
-}
-function cancelar() {
-  router.push({
-    name: 'Autores'
+  var res = await modificar({
+    id: id.value!,
+    nombre: nombre.value!,
+    apellidos: apellidos.value!,
+    edad: edad.value!
   })
+  if (res) {
+    validationError.value = res
+    return
+  }
+  dialog.value = false
 }
+
+function required(v: string) {
+  return !!v || 'Campo obligatorio'
+}
+
+defineExpose({
+  showDialog
+})
 </script>
 
 <template>
-  <div class="agregar-background">
-    <v-card :title="titulo" style="opacity: 95%; width: 40%; margin-left: 30%; margin-top: 10%">
+  <v-dialog v-model="dialog" persistent>
+    <v-card :title="titulo" style="width: 30%; align-self: center">
       <v-card-text>
-        <v-text-field label="Nombre" variant="outlined" required v-model="nombre"></v-text-field>
+        <v-text-field
+          label="Nombre"
+          variant="outlined"
+          :rules="[required]"
+          v-model="nombre"
+        ></v-text-field>
         <v-text-field
           label="Apellidos"
           variant="outlined"
-          required
+          :rules="[required]"
           v-model="apellidos"
         ></v-text-field>
         <v-text-field
           label="Edad"
           variant="outlined"
           type="number"
-          required
+          :rules="[required]"
           v-model="edad"
         ></v-text-field>
       </v-card-text>
-      <v-card-actions
-        ><v-btn v-if="!props.id" @click="anadirAutor">Añadir autor</v-btn>
-        <v-btn v-else @click="modificarAutor()">Guardar</v-btn>
-
-        <v-btn @click="cancelar">Cancelar</v-btn>
-
+      <v-card-actions>
         <p style="white-space: pre-line; color: red" v-if="validationError != undefined">
           {{ validationError }}
         </p>
+        <v-btn
+          v-if="!id"
+          @click="anadirAutor"
+          color="success"
+          variant="elevated"
+          :disabled="!completo"
+          >Añadir autor</v-btn
+        >
+        <v-btn
+          v-else
+          @click="modificarAutor"
+          color="success"
+          variant="elevated"
+          :disabled="!completo"
+          >Guardar</v-btn
+        >
+
+        <v-btn @click="dialog = false" color="error" variant="elevated">Cancelar</v-btn>
       </v-card-actions>
     </v-card>
-  </div>
+  </v-dialog>
 </template>

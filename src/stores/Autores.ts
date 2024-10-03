@@ -1,7 +1,6 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { Autor } from '@/models/Autor'
-import instance from '@/services/api'
 
 export const useAutoresStore = defineStore('Autores', () => {
   const Lautores = ref<Autor[]>([])
@@ -10,11 +9,8 @@ export const useAutoresStore = defineStore('Autores', () => {
     return Lautores.value.find((item) => item.id == id)!
   }
 
-  async function loadAuthors(forceRefresh: boolean = false) {
-    if (Lautores.value.length > 0 && !forceRefresh) {
-      return
-    }
-    Lautores.value = (await instance.get<Autor[]>('Author/All')).data
+  async function loadAuthors(autores: Autor[]) {
+    Lautores.value = autores
   }
 
   function quitar(autor: Autor) {

@@ -2,116 +2,134 @@
 import type { Libro } from '@/models/Libro'
 import type { Autor } from '@/models/Autor'
 
-import { onBeforeMount, ref } from 'vue'
-import instance from '@/services/api'
-import router from '@/router'
-import { useLibrosStore } from '@/stores/Libros'
-import { storeToRefs } from 'pinia'
-import { useAutoresStore } from '@/stores/Autores'
+import { computed, ref } from 'vue'
+import { useLibro } from '@/componsables/Libro'
+import { useAutor } from '@/componsables/Autor'
 
-onBeforeMount(async () => {
-  AutoresStore.loadAuthors()
-  if (!props.id) {
-    titulo.value = 'Añadir libro'
-    return
-  }
-  let libro: Libro = LibrosStore.getLibro(props.id)
-  titulo.value = 'Editar libro'
-  nombre.value = libro.nombre
-  anonimo.value = libro.autorId === null
-  autorId.value = libro.autorId
-  numeroPaginas.value = libro.numeroPaginas
-})
-
-const props = defineProps<{
-  id?: number
-}>()
-
-const LibrosStore = useLibrosStore()
-const AutoresStore = useAutoresStore()
-const { Lautores } = storeToRefs(AutoresStore)
+const { agregar, modificar } = useLibro()
+const { autores, loadAuthors } = useAutor()
+const id = ref<number>()
 const titulo = ref<string>()
 const nombre = ref<string>()
 const numeroPaginas = ref<number>()
 const anonimo = ref(false)
 const autorId = ref<number>()
-const validationError = ref<string>()
+const validationError = ref<string | undefined>()
+const dialog = ref(false)
+const completo = computed(
+  () => !!nombre.value && !!numeroPaginas.value && (anonimo.value || !!autorId.value)
+)
+
+function showDialog(libro?: Libro) {
+  loadAuthors()
+  titulo.value = libro ? 'Editar libro' : 'Añadir libro'
+  nombre.value = libro?.nombre
+  numeroPaginas.value = libro?.numeroPaginas
+  anonimo.value = libro?.autorId === null
+  autorId.value = libro?.autorId
+  id.value = libro?.id
+  dialog.value = true
+  validationError.value = undefined
+}
 
 async function anadirLibro() {
-  await instance
-    .post<number>('Book', {
-      nombre: nombre.value,
-      numeroPaginas: numeroPaginas.value,
-      autorId: anonimo.value ? undefined : autorId.value
-    })
-    .then(() => {
-      router.push('/Libros')
-    })
-    .catch((error) => {
-      validationError.value = error.response.data.description
-      return
-    })
+  var res = await agregar({
+    nombre: nombre.value!,
+    numeroPaginas: numeroPaginas.value!,
+    autorId: anonimo.value ? undefined : autorId.value
+  })
+  if (res) {
+    validationError.value = res
+    return
+  }
+  dialog.value = false
 }
 
 async function modificarLibro() {
-  await instance
-    .put('Book/' + props.id, {
-      nombre: nombre.value,
-      numeroPaginas: numeroPaginas.value,
-      autorId: anonimo.value ? undefined : autorId.value
-    })
-    .then(() => {
-      router.push('/Libros')
-    })
-    .catch((error) => {
-      validationError.value = error.response.data.description
-      return
-    })
-}
-function cancelar() {
-  router.push({
-    name: 'Libros'
+  var res = await modificar({
+    id: id.value!,
+    nombre: nombre.value!,
+    numeroPaginas: numeroPaginas.value!,
+    autorId: anonimo.value ? undefined : autorId.value
   })
+  if (res) {
+    validationError.value = res
+    return
+  }
+  dialog.value = false
 }
+
+function required(v: string) {
+  return !!v || 'Campo obligatorio'
+}
+function requiredAutor(v: string) {
+  return anonimo.value || !!v || 'Campo obligatorio'
+}
+
+defineExpose({
+  showDialog
+})
 </script>
 
 <template>
-  <v-card :title="titulo" style="opacity: 95%; width: 40%; align-self: center; margin-top: 10%">
-    <v-card-text>
-      <v-text-field label="Nombre" variant="outlined" required v-model="nombre"></v-text-field>
-
-      <v-text-field
-        label="Número de paginas"
-        variant="outlined"
-        type="number"
-        required
-        v-model="numeroPaginas"
-      ></v-text-field>
-
-      <v-checkbox v-model="anonimo" label="Anónimo"></v-checkbox>
-
-      <template v-if="!anonimo">
-        <v-select
-          label="Autor"
-          :items="Lautores"
+  <v-dialog v-model="dialog" persistent>
+    <v-card :title="titulo" style="width: 30%; align-self: center">
+      <v-card-text>
+        <v-text-field
+          label="Nombre"
           variant="outlined"
-          v-model="autorId"
-          :required="!anonimo"
-          :item-title="(item: Autor) => `${item.nombre} ${item.apellidos}`"
-          item-value="id"
-          single-line
-        ></v-select>
-      </template>
-    </v-card-text>
-    <v-card-actions>
-      <v-btn v-if="!props.id" @click="anadirLibro">Añadir libro</v-btn>
-      <v-btn v-else @click="modificarLibro()">Guardar</v-btn>
+          :rules="[required]"
+          v-model="nombre"
+        ></v-text-field>
 
-      <v-btn @click="cancelar">Cancelar</v-btn>
+        <v-text-field
+          label="Número de paginas"
+          variant="outlined"
+          type="number"
+          :rules="[required]"
+          v-model="numeroPaginas"
+        ></v-text-field>
 
-      <p style="white-space: pre-line; color: red" v-if="validationError != undefined">
-        {{ validationError }}
-      </p>
-    </v-card-actions>
-  </v-card>
+        <v-checkbox v-model="anonimo" label="Anónimo"></v-checkbox>
+
+        <template v-if="!anonimo">
+          <v-select
+            label="Autor"
+            :items="autores"
+            variant="outlined"
+            v-model="autorId"
+            :rules="[requiredAutor]"
+            :item-title="(item: Autor) => `${item.nombre} ${item.apellidos}, ${item.edad} años`"
+            item-value="id"
+            single-line
+            clearable
+          ></v-select>
+        </template>
+      </v-card-text>
+      <v-card-actions>
+        <p style="white-space: pre-line; color: red" v-if="validationError != undefined">
+          {{ validationError }}
+        </p>
+
+        <v-btn
+          v-if="!id"
+          @click="anadirLibro"
+          color="success"
+          variant="elevated"
+          :disabled="!completo"
+          >Añadir libro</v-btn
+        >
+        <v-btn
+          v-else
+          @click="modificarLibro"
+          color="success"
+          variant="elevated"
+          :disabled="!completo"
+          >Guardar</v-btn
+        >
+
+        <v-btn @click="dialog = false" color="error" variant="elevated">Cancelar</v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>

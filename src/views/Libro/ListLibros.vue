@@ -1,17 +1,16 @@
 <script setup lang="ts">
-import { onBeforeMount, ref } from 'vue'
-import instance from '@/services/api'
+import { onBeforeMount, useTemplateRef } from 'vue'
 import type { Libro } from '@/models/Libro'
 import router from '@/router'
-import { useLibrosStore } from '@/stores/Libros'
-import { storeToRefs } from 'pinia'
+import { useLibro } from '@/componsables/Libro'
+import FLibro from '@/components/FLibro.vue'
 
 onBeforeMount(async () => {
-  await LibrosStore.loadBooks(true)
+  await loadBooks(true)
 })
 
-const LibrosStore = useLibrosStore()
-const { Llibros } = storeToRefs(LibrosStore)
+const { libros, loadBooks, quitar } = useLibro()
+const libroDialog = useTemplateRef('libroDialog')
 
 const headers = [
   {
@@ -26,20 +25,14 @@ const headers = [
 ]
 
 async function borrarLibro(libro: Libro) {
-  await instance.delete<number>('Book/' + libro.id)
-  LibrosStore.quitar(libro)
+  quitar(libro)
 }
 
 function editarLibro(libro: Libro) {
-  router.push({
-    name: 'Editarlibro',
-    params: { id: libro.id }
-  })
+  libroDialog.value?.showDialog(libro)
 }
 function anadirLibro() {
-  router.push({
-    name: 'Anadirlibro'
-  })
+  libroDialog.value?.showDialog()
 }
 function irInicio() {
   router.push({
@@ -49,7 +42,7 @@ function irInicio() {
 </script>
 
 <template>
-  <v-data-table :headers="headers" :items="Llibros" hide-default-footer style="height: 100%">
+  <v-data-table :headers="headers" :items="libros" style="height: 100%">
     <template v-slot:top>
       <v-toolbar flat color="black">
         <v-toolbar-title>LIBROS</v-toolbar-title>
@@ -64,6 +57,7 @@ function irInicio() {
       <v-icon size="small" @click="borrarLibro(item)"> mdi-delete </v-icon>
     </template>
   </v-data-table>
+  <FLibro ref="libroDialog"></FLibro>
 </template>
 
 <style>
